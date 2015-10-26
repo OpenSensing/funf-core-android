@@ -25,8 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -44,6 +47,7 @@ import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.ConfigUpdater;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
+import edu.mit.media.funf.data.Geofencer;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.builtin.ProbeKeys;
@@ -54,6 +58,8 @@ import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
+
+import static edu.mit.media.funf.util.LogUtil.TAG;
 
 public class BasicPipeline implements Pipeline, DataListener {
 
@@ -84,10 +90,18 @@ public class BasicPipeline implements Pipeline, DataListener {
   protected List<JsonElement> data = new ArrayList<JsonElement>();
   
   @Configurable
-  protected Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
+  protected Map<String, Schedule> schedules = new HashMap<String, Schedule>();
+
+  @Configurable
+  protected Geofencer geofence = new Geofencer();
+
+  @Configurable
+  protected boolean broadcastCollectionState = true;
   
   private UploadService uploader;
-  
+
+  private Integer savingData = -1;
+
   private boolean enabled;
   private FunfManager manager;
   private SQLiteOpenHelper databaseHelper = null;
@@ -142,8 +156,29 @@ public class BasicPipeline implements Pipeline, DataListener {
     reloadDbHelper(manager);
     databaseHelper.getWritableDatabase(); // Build new database
   }
-  
+
+  private void broadcastDataCollection() {
+    if (!broadcastCollectionState) return;
+
+    if (geofence.shouldSaveData(System.currentTimeMillis())) {
+      if (savingData != 1) {
+        savingData = 1;
+        manager.broadcastDataCollectionStatus(savingData);
+      }
+
+    } else {
+      if (savingData != 0) {
+        savingData = 0;
+        manager.broadcastDataCollectionStatus(savingData);
+      }
+    }
+  }
+
   protected void writeData(String name, IJsonObject data) {
+
+    broadcastDataCollection();
+    if (!geofence.shouldSaveData(name, data)) return;
+
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();
     final String value = data.toString();
@@ -347,5 +382,9 @@ public class BasicPipeline implements Pipeline, DataListener {
   public void onDataCompleted(IJsonObject probeConfig, JsonElement checkpoint) {
     // TODO Figure out what to do with continuations of probes, if anything
 
+  }
+
+  public List<JsonElement> getFences() {
+    return this.geofence.getFences();
   }
 }
