@@ -540,7 +540,12 @@ public class FunfManager extends Service {
 			throw new IllegalArgumentException("Probe config cannot be null");
 		}
 		// Use schedule in probeConfig @schedule annotation
-		Probe probe = gson.fromJson(probeConfig, Probe.class);
+		Probe probe = null;
+		try {
+			probe = gson.fromJson(probeConfig, Probe.class);
+		} catch (NullPointerException e) {
+			return;
+		}
 		probe.addStateListener(probeStateListener);
 		if (schedule == null) {
 			DefaultSchedule defaultSchedule = probe.getClass().getAnnotation(DefaultSchedule.class);
