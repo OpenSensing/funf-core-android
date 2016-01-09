@@ -47,6 +47,7 @@ import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DisplayName;
+import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.util.LogUtil;
@@ -55,7 +56,7 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredPermissions({Manifest.permission.ACCESS_WIFI_STATE, Manifest.permission.CHANGE_WIFI_STATE})
 @RequiredFeatures("android.hardware.wifi")
 @DisplayName("Nearby Wifi Devices Probe")
-public class WifiProbe extends Base {
+public class WifiProbe extends Base implements PassiveProbe {
 
     @Configurable
     private boolean include_scan_started = true;
