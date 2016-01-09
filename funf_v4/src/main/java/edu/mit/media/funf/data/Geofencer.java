@@ -40,9 +40,8 @@ public class Geofencer {
 
 
   private Set<String> acceptedLocationProbes =
-      new HashSet<String>(Arrays.asList("edu.mit.media.funf.probe.builtin.LocationProbe", "edu.mit.media.funf.probe.builtin.SimpleLocationProbe"));
-
-
+      new HashSet<String>(Arrays.asList("edu.mit.media.funf.probe.builtin.LocationProbe",
+          "edu.mit.media.funf.probe.builtin.SimpleLocationProbe"));
 
   public Geofencer() {
     Log.i(LogUtil.TAG, "Creating geofencer " + version);
@@ -68,7 +67,7 @@ public class Geofencer {
 
   private void updateVisits(String name, IJsonObject data) {
 
-    if (name.equals("edu.mit.media.funf.probe.builtin.LocationProbe")) {
+    if (acceptedLocationProbes.contains(name)) {
       Double accuracy = data.get("mAccuracy").getAsDouble();
       Double lat = data.get("mLatitude").getAsDouble();
       Double lon = data.get("mLongitude").getAsDouble();
