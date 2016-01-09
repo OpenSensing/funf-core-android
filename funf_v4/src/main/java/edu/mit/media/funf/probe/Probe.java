@@ -437,7 +437,7 @@ public interface Probe {
 		 * on this object, if you plan to modify it or iterate over it.
 		 */
 		protected Set<DataListener> getPassiveDataListeners() {
-			return dataListeners;
+			return passiveDataListeners;
 		}
 
 		@Override
@@ -487,7 +487,7 @@ public interface Probe {
 		public void registerPassiveListener(DataListener... listeners) {
 			if (listeners != null) {
 				for (DataListener listener : listeners) {
-					dataListeners.add(listener);
+					passiveDataListeners.add(listener);
 				}
 				enable();
 			}
@@ -497,7 +497,7 @@ public interface Probe {
 			if (listeners != null) {
 				JsonElement checkpoint = getCheckpointIfContinuable();
 				for (DataListener listener : listeners) {
-					dataListeners.remove(listener);
+					passiveDataListeners.remove(listener);
 					listener.onDataCompleted(getConfig(), checkpoint);
 				}
 				// If no one is listening, stop using device resources
