@@ -1,11 +1,11 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 17
+    compileSdkVersion 21
     buildToolsVersion "23.0.0"
 
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 9
         targetSdkVersion 14
     }
 
@@ -25,6 +25,7 @@ android {
 
 dependencies {
     compile files('libs/gson-2.1.jar')
+    compile 'com.google.android.gms:play-services:8.3.0'
 }
 
 
