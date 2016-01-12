@@ -222,7 +222,7 @@ public class FunfManager extends Service {
 	}
 
 	public String getVersion() {
-		String version = "unknown";
+		String version = BuildInfo.BUILD_INFO;
 		BufferedReader reader = null;
 		try{
 			reader = new BufferedReader(new InputStreamReader(getAssets().open("build.info")));
