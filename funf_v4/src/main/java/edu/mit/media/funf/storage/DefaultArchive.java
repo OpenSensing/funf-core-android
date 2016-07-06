@@ -30,9 +30,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import android.content.Context;
-import android.util.Log;
 
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
@@ -54,12 +54,16 @@ import edu.mit.media.funf.util.StringUtil;
 public class DefaultArchive implements FileArchive {
 
 	private static final String DES_ENCRYPTION = "DES";
-	
+
+	private static final String AES_ENCRYPTION = "AES";
+	private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
+	private static final int KEY_LENGTH = 256;
+
 	private final static byte[] SALT = {
         (byte)0xa6, (byte)0xab, (byte)0x09, (byte)0x93,
         (byte)0xf4, (byte)0xcc, (byte)0xee, (byte)0x10
     };
-	private final static int ITERATION_COUNT = 135; // # of times password is hashed
+	private final static int ITERATION_COUNT = 100000; // # of times password is hashed
 	
 	@Configurable
 	protected String name = "default";
@@ -100,9 +104,9 @@ public class DefaultArchive implements FileArchive {
 	  if (encryptionPassword == null || encryptionPassword.length == 0) {
 	    setEncryptionKey(null);
 	  } else {
-		PBEKeySpec keySpec = new PBEKeySpec(encryptionPassword, SALT, ITERATION_COUNT);
+		PBEKeySpec keySpec = new PBEKeySpec(encryptionPassword, SALT, ITERATION_COUNT, KEY_LENGTH);
 		try {
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 			SecretKey secretKey = factory.generateSecret(keySpec);
 			setEncryptionKey(secretKey.getEncoded());
 		} catch (GeneralSecurityException e) {
@@ -115,14 +119,9 @@ public class DefaultArchive implements FileArchive {
 	  if (encryptionKey == null || encryptionKey.length == 0) {
         saveKey(null);
       } else {
-		try {
-			DESKeySpec des = new DESKeySpec(encryptionKey);
-			SecretKey key = SecretKeyFactory.getInstance(DES_ENCRYPTION).generateSecret(des);
-			saveKey(key);
-		} catch (GeneralSecurityException e) {
-			throw new RuntimeException("Unable to build key for encryption", e);
-		} 
-      }
+		  SecretKey key = new SecretKeySpec(encryptionKey, AES_ENCRYPTION);
+		  saveKey(key);
+	  }
 	}
 	
 	
@@ -183,9 +182,9 @@ public class DefaultArchive implements FileArchive {
 		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(suffix));
 		FileCopier copier = null;
 		if (compress) {
-			copier = (encryptionKey == null) ? new FileCopier.CompressedFileCopier() : new FileCopier.CompressedEncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
+			copier = (encryptionKey == null) ? new FileCopier.CompressedFileCopier() : new FileCopier.CompressedEncryptedFileCopier(encryptionKey, TRANSFORMATION);
 		} else {
-			copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
+			copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey, TRANSFORMATION);
 		}
 
 		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
